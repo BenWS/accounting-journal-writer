@@ -10,8 +10,8 @@ Present ledger in format familiar to accountants
 //Defining Program Classes
 var TransactionType = function(name, debitAccount, creditAccount) {
   this.name = name;
-  this.debitAccount = debitAccount;
-  this.creditAccount = creditAccount
+  this.debitAccount = debitAccount.name;
+  this.creditAccount = creditAccount.name;
 }
 
 var Company = function(name) {
@@ -22,6 +22,11 @@ var Company = function(name) {
 var Accountant = function(name, company) {
   this.name = name;
   this.company = company;
+}
+
+var Account = function(name, category) {
+  this.name = name;
+  this.category = category;
 }
 
 Accountant.prototype.recordTransaction = function(transactionType, amount) {
@@ -41,3 +46,8 @@ Accountant.prototype.recordTransaction = function(transactionType, amount) {
   this.company.ledger.push(transaction.debit);
   this.company.ledger.push(transaction.credit);
 }
+
+module.exports.TransactionType = TransactionType;
+module.exports.Company = Company;
+module.exports.Accountant = Accountant;
+module.exports.Account = Account;
