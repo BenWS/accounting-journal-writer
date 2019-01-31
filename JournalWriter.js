@@ -56,8 +56,9 @@ DatabaseTable.prototype.selectLast = async function() {
   var databaseName = this.database.name;
   var collectionName = this.name;
   var collection = client.db(databaseName).collection(collectionName);
-  console.log(await collection.find({}).sort('_id',-1).limit(1).toArray());
+  var result = await collection.find({}).sort('_id',-1).limit(1).toArray();
   await client.close();
+  return result[0]
 }
 
 var Accountant = function(name, company) {
@@ -73,12 +74,10 @@ var Account = function(name, category) {
 Accountant.prototype.recordTransaction = async function(transactionType, amount) {
   //get current transactionID
   var transactionID;
-  var lastTransaction = await this.company.ledger.selectLast()[0];
+  var lastTransaction = await this.company.ledger.selectLast();
   if (lastTransaction == undefined) {
     transactionID = 0
-    console.log('Debugging: ' + lastTransaction);
   } else {
-    console.log('Debugging: ' + lastTransaction);
     transactionID = lastTransaction.TransactionID + 1;
   }
 
