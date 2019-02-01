@@ -11,6 +11,7 @@ Present ledger in format familiar to accountants
 
 /***************************************
 Resources:
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
 https://mongodb.github.io/node-mongodb-native/
 ***************************************/
 
@@ -39,7 +40,7 @@ var DatabaseTable = function(database,tableName) {
   this.database = database;
 };
 
-DatabaseTable.prototype.insert = function(data) {
+DatabaseTable.prototype.insertOne = function(data) {
   var client = new MongoClient(this.database.server_url);
   client.connect((err, client) => {
     var databaseName = this.database.name;
@@ -50,15 +51,15 @@ DatabaseTable.prototype.insert = function(data) {
   })
 }
 
-DatabaseTable.prototype.selectLast = async function() {
+DatabaseTable.prototype.insertMany = function(data) {
   var client = new MongoClient(this.database.server_url);
-  await client.connect();
-  var databaseName = this.database.name;
-  var collectionName = this.name;
-  var collection = client.db(databaseName).collection(collectionName);
-  var result = await collection.find({}).sort('_id',-1).limit(1).toArray();
-  await client.close();
-  return result[0]
+  client.connect((err, client) => {
+    var databaseName = this.database.name;
+    var collectionName = this.name;
+    var collection = client.db(databaseName).collection(collectionName);
+    collection.insertMany(data);
+    client.close();
+  })
 }
 
 var Accountant = function(name, company) {
@@ -71,23 +72,24 @@ var Account = function(name, category) {
   this.category = category;
 }
 
-Accountant.prototype.recordTransaction = async function(transactionType, amount) {
-  //get current transactionID
-  var transactionID;
-  var lastTransaction = await this.company.ledger.selectLast();
-  if (lastTransaction == undefined) {
-    transactionID = 0
-  } else {
-    transactionID = lastTransaction.TransactionID + 1;
-  }
-
+Accountant.prototype.recordTransaction = async function(transactionType, amount, dateTime) {
   //record transaction in ledger
-  var transaction =
-    {'debit':{'TransactionID':transactionID, 'Account':transactionType.debitAccount, 'Change':'Debit','Amount':amount}
-      ,'credit':{'TransactionID':transactionID, 'Account':transactionType.creditAccount, 'Change':'Credit', 'Amount':amount}};
+  var doubleBooking =
+    {'debit':{'Account':transactionType.debitAccount, 'Change':'Debit','Amount':amount, 'DateTime':new Date(dateTime)}
+      ,'credit':{'Account':transactionType.creditAccount, 'Change':'Credit', 'Amount':amount}, 'DateTime':new Date(dateTime)};
 
-  this.company.ledger.insert(transaction.debit);
-  this.company.ledger.insert(transaction.credit);
+  await this.company.ledger.insert(doubleBooking);
+}
+
+Accountant.prototype.recordBulkTransaction = async function(transactionArray) {
+  var doubleBookingArray = transactionArray.map((transaction) => {
+    var doubleBooking = {'debit':{'Account':transaction.type.debitAccount, 'Change':'Debit','Amount': transaction.amount, 'DateTime': new Date(dateTime)}
+      ,'credit':{'Account':transaction.type.creditAccount, 'Change':'Credit', 'Amount':transaction.amount}, 'DateTime': new Date(dateTime)};
+
+    return doubleBooking;
+  });
+
+  await this.company.ledger.insertMany(doubleBookingArray);
 }
 
 module.exports.TransactionType = TransactionType;
