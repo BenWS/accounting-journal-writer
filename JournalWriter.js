@@ -78,13 +78,13 @@ Accountant.prototype.recordTransaction = async function(transactionType, amount,
     {'debit':{'Account':transactionType.debitAccount, 'Change':'Debit','Amount':amount, 'DateTime':new Date(dateTime)}
       ,'credit':{'Account':transactionType.creditAccount, 'Change':'Credit', 'Amount':amount}, 'DateTime':new Date(dateTime)};
 
-  await this.company.ledger.insert(doubleBooking);
+  await this.company.ledger.insertOne(doubleBooking);
 }
 
 Accountant.prototype.recordBulkTransaction = async function(transactionArray) {
   var doubleBookingArray = transactionArray.map((transaction) => {
-    var doubleBooking = {'debit':{'Account':transaction.type.debitAccount, 'Change':'Debit','Amount': transaction.amount, 'DateTime': new Date(dateTime)}
-      ,'credit':{'Account':transaction.type.creditAccount, 'Change':'Credit', 'Amount':transaction.amount}, 'DateTime': new Date(dateTime)};
+    var doubleBooking = {'debit':{'Account':transaction.type.debitAccount, 'Change':'Debit','Amount': transaction.amount, 'DateTime': new Date(transaction.dateTime)}
+      ,'credit':{'Account':transaction.type.creditAccount, 'Change':'Credit', 'Amount':transaction.amount}, 'DateTime': new Date(transaction.dateTime)};
 
     return doubleBooking;
   });
