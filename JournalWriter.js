@@ -29,7 +29,16 @@ var TransactionType = function(name, debitAccount, creditAccount) {
 var Database = function(server_url, databaseName) {
   this.server_url = server_url
   this.name = databaseName;
+  this.client;
 };
+
+Database.prototype.openConnection = async function() {
+  this.client = await new MongoClient(this.server_url).connect();
+}
+
+Database.prototype.closeConnection = async function() {
+  await this.client.close();
+}
 
 Database.prototype.getTable = function(table) {
   return new DatabaseTable(this, table);
@@ -38,28 +47,34 @@ Database.prototype.getTable = function(table) {
 var DatabaseTable = function(database,tableName) {
   this.name = tableName;
   this.database = database;
+  this.client = database.client;
 };
 
-DatabaseTable.prototype.insertOne = function(data) {
-  var client = new MongoClient(this.database.server_url);
-  client.connect((err, client) => {
-    var databaseName = this.database.name;
-    var collectionName = this.name;
-    var collection = client.db(databaseName).collection(collectionName);
-    collection.insertOne(data);
-    client.close();
-  })
+DatabaseTable.prototype.insertOne = async function(data) {
+  var databaseName = this.database.name;
+  var collectionName = this.name;
+  var client = this.database.client;
+
+  var collection = await client.db(databaseName).collection(collectionName);
+  await collection.insertOne(data);
 }
 
-DatabaseTable.prototype.insertMany = function(data) {
-  var client = new MongoClient(this.database.server_url);
-  client.connect((err, client) => {
-    var databaseName = this.database.name;
-    var collectionName = this.name;
-    var collection = client.db(databaseName).collection(collectionName);
-    collection.insertMany(data);
-    client.close();
-  })
+DatabaseTable.prototype.insertMany = async function(data) {
+  var databaseName = this.database.name;
+  var collectionName = this.name;
+  var client = this.database.client
+
+  var collection = await client.db(databaseName).collection(collectionName);
+  await collection.insertMany(data);
+}
+
+DatabaseTable.prototype.drop = async function(data) {
+  var databaseName = this.database.name;
+  var collectionName = this.name;
+  var client = this.database.client;
+
+  var collection = await client.db(databaseName).collection(collectionName);
+  await collection.drop();
 }
 
 var Accountant = function(name, company) {
