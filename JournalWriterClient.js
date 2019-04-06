@@ -61,17 +61,19 @@ var main = async function() {
   var startingEquity = question_slider('Your business\'s starting investment (in US $): ', 20000);
   var rentAmount = question_slider('Your business\'s monthly building rent expense (in US $): ', 3000);
   var itemName = readLine.question('Name of item being sold: ');
-  var itemRetail = question_slider(`How much is your business selling ${itemName} each for (in US $)?`, 6)
+  var itemRetail = question_slider(`How much is your business selling each ${itemName} for (in US $)?`, 6)
   var itemCost = question_slider(`How much is your business buying each ${itemName} for (in US $)?`, 6);
 
   var currentYear = (new Date(Date.now())).getFullYear();
   var currentDate = new Date(currentYear , 0);
+  console.log(currentDate);
   var monthNames =
     ['January', 'February', 'March', 'April'
       , 'May', 'June', 'July', 'August', 'September'
       , 'October', 'November', 'December']
 
   await database.openConnection();
+  await company.ledger.drop();
 
   while (currentDate.getFullYear() == currentYear) {
       quantitySold = question_slider('Quantity product sold for the month of ' + monthNames[currentDate.getMonth()] + ': ', 1000);
@@ -86,6 +88,9 @@ var main = async function() {
 
       currentDate.setMonth(currentDate.getMonth() + 1);
   }
+  //print the balance sheet
+  console.log('Balance Sheet: ')
+  console.log(await accountant.getBalanceSheet(currentDate));
 
   await database.closeConnection();
 }
